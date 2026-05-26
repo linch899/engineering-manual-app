@@ -2,8 +2,30 @@
 <html lang="zh-TW" class="light">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>非工程專責機關辦理工程參考手冊</title>
+
+    <!-- ═══════════════════════════════════════════
+         PWA 設定：觸發 Chrome「安裝應用程式」
+         ═══════════════════════════════════════════ -->
+    <!-- Android / Chrome -->
+    <link rel="manifest" href="/manifest.json">
+    <!-- iOS Safari -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="工程參考手冊">
+    <link rel="apple-touch-icon" href="/icon-192x192.png">
+    <!-- Service Worker 註冊 -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                    .then(function (reg) { console.log('SW 已啟用，scope:', reg.scope); })
+                    .catch(function (err) { console.error('SW 註冊失敗:', err); });
+            });
+        }
+    </script>
+    <!-- ═══════════════════════════════════════════ -->
     <!-- Tailwind CSS Play CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -211,34 +233,6 @@
             </button>
         </div>
     </header>
-    <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, 
-        maximum-scale=1.0, user-scalable=no">
-
-  <!-- PWA Manifest -->
-  <link rel="manifest" href="/manifest.json">
-
-  <!-- iOS 支援 -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="輕量 App">
-  <link rel="apple-touch-icon" href="/icon-192x192.png">
-
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function () {
-        navigator.serviceWorker.register('/sw.js', { scope: '/' })
-          .then(function (reg) {
-            console.log('SW 註冊成功，scope:', reg.scope);
-          })
-          .catch(function (err) {
-            console.error('SW 註冊失敗:', err);
-          });
-      });
-    }
-  </script>
-</head>
 
     <!-- 手機版快速搜尋條 -->
     <div class="theme-transition p-3 bg-white dark:bg-slate-900 md:hidden border-b border-slate-200 dark:border-slate-800 flex items-center gap-2">
@@ -1178,11 +1172,12 @@
             const contentArea = document.getElementById('col3-main-content');
             if (!contentArea) return;
             
-            const printWin = window.open('', '', 'width=850,height=700');
-            if (!printWin) {
-                showNotification("✕ 攔截視窗", "列印視窗已被瀏覽器封鎖，請允許快顯視窗再行嘗試。");
-                return;
-            }
+            // 建立隱藏 iframe 替代 window.open 以避開 Tauri 快顯封鎖
+            const iframe = document.createElement('iframe');
+            iframe.style.cssText = 'position:absolute;width:0;height:0;border:none;';
+            document.body.appendChild(iframe);
+            
+            const doc = iframe.contentWindow.document;
 
             // 引入共享 CSS，大幅優化冗餘代碼空間
             const style = `
@@ -1206,13 +1201,18 @@
                 </div>
             `;
             
-            printWin.document.write('<html><head><title>列印項目 - ' + state.selectedL2 + '</title>' + style + '</head><body>' + stageHtml + headerHtml + '<div class="manual-content">' + contentArea.innerHTML + '</div>' + metaHtml + '</body></html>');
-            printWin.document.close();
-            printWin.focus();
+            doc.open();
+            doc.write('<html><head><title>列印項目 - ' + state.selectedL2 + '</title>' + style + '</head><body>' + stageHtml + headerHtml + '<div class="manual-content">' + contentArea.innerHTML + '</div>' + metaHtml + '</body></html>');
+            doc.close();
+            
+            iframe.contentWindow.focus();
             
             setTimeout(() => {
-                printWin.print();
-                printWin.close();
+                iframe.contentWindow.print();
+                // 延遲移除 iframe，確保系統已成功呼叫列印對話框
+                setTimeout(() => {
+                    document.body.removeChild(iframe);
+                }, 1000);
             }, 250);
         }
 
@@ -1271,11 +1271,12 @@
             const selectedStages = Array.from(checkboxes).map(cb => cb.value);
             closePdfExportModal();
 
-            const printWin = window.open('', '', 'width=900,height=800');
-            if (!printWin) {
-                showNotification("✕ 阻擋視窗", "PDF 整合視窗已被瀏覽器封鎖，請啟用允許彈出視窗。");
-                return;
-            }
+            // 建立隱藏 iframe 替代 window.open 以避開 Tauri 快顯封鎖
+            const iframe = document.createElement('iframe');
+            iframe.style.cssText = 'position:absolute;width:0;height:0;border:none;';
+            document.body.appendChild(iframe);
+            
+            const doc = iframe.contentWindow.document;
 
             // 組裝政府格式化富文本列印內容
             let contentHtml = '';
@@ -1380,7 +1381,8 @@
                 </style>
             `;
 
-            printWin.document.write(`
+            doc.open();
+            doc.write(`
                 <html>
                 <head>
                     <title>非工程專責機關辦理工程參考手冊 - 範圍匯出</title>
@@ -1395,12 +1397,16 @@
                 </body>
                 </html>
             `);
-            printWin.document.close();
-            printWin.focus();
+            doc.close();
+            
+            iframe.contentWindow.focus();
 
             setTimeout(() => {
-                printWin.print();
-                printWin.close();
+                iframe.contentWindow.print();
+                // 延遲移除 iframe，確保系統已成功呼叫列印對話框
+                setTimeout(() => {
+                    document.body.removeChild(iframe);
+                }, 1000);
             }, 350);
         }
 
