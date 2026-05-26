@@ -210,28 +210,35 @@
                 </div>
             </button>
         </div>
-  <!-- mobil 支援，連結 manifest.json 以及註冊 Service Worker 的程式碼 -->>     
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  
-  <link rel="manifest" href="./manifest.json">
-  
-  <link rel="apple-touch-icon" href="./android-chrome-192x192.png">
+    </header>
+    <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, 
+        maximum-scale=1.0, user-scalable=no">
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/manifest.json">
+
+  <!-- iOS 支援 -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="工程手冊 App"> <script>
-    // 修正 3：註冊 Service Worker 並明確指定 scope
+  <meta name="apple-mobile-web-app-title" content="輕量 App">
+  <link rel="apple-touch-icon" href="/icon-192x192.png">
+
+  <script>
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function() {
-        navigator.serviceWorker.register('./sw.js', { scope: './' })
-          .then(function(registration) {
-            console.log('ServiceWorker 註冊成功，Scope: ', registration.scope);
-          }).catch(function(err) {
-            console.log('ServiceWorker 註冊失敗: ', err);
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' })
+          .then(function (reg) {
+            console.log('SW 註冊成功，scope:', reg.scope);
+          })
+          .catch(function (err) {
+            console.error('SW 註冊失敗:', err);
           });
       });
     }
   </script>
-    </header>
+</head>
 
     <!-- 手機版快速搜尋條 -->
     <div class="theme-transition p-3 bg-white dark:bg-slate-900 md:hidden border-b border-slate-200 dark:border-slate-800 flex items-center gap-2">
