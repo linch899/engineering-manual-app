@@ -3,7 +3,7 @@
 // 版本號：每次更新 data/manual.json 或其他檔案後，
 //         請將下方 v1 改為 v2、v3… 以強制使用者重新快取
 // =====================================================
-const CACHE_NAME = 'engineering-manual-v2';
+const CACHE_NAME = 'engineering-manual-v3';
 
 const FILES_TO_CACHE = [
   './',
